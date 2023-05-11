@@ -1,48 +1,41 @@
 package com.example.contextholder.filter;
 
 import com.example.contextholder.context.CustomContext;
-import com.example.contextholder.context.CustomContextHolder;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.web.filter.OncePerRequestFilter;
+import org.springframework.web.context.request.RequestAttributes;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
+import org.springframework.web.filter.RequestContextFilter;
 
 import java.io.IOException;
 
 /**
- * OncePerRequestFilter responsible for populating {@link CustomContext}
- * in {@link CustomContextHolder}.
+ * Filter to set CustomContext in Spring's RequestContextHolder
+ * before each request is processed.
  *
- * @see OncePerRequestFilter
+ * @see RequestContextHolder
+ * @see CustomContext
  */
-public class ContextFilter extends OncePerRequestFilter {
-    private final CustomContextHolder customContextHolder;
-
-    public ContextFilter(CustomContextHolder customContextHolder) {
-        this.customContextHolder = customContextHolder;
-    }
-
+public class ContextFilter extends RequestContextFilter {
     @Override
-    protected boolean shouldNotFilter(HttpServletRequest request) {
-        return request.getRequestURI().matches(".*/swagger-ui.html");
-    }
-
-    @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+    protected void doFilterInternal(
+            HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
+        ServletRequestAttributes attributes = new ServletRequestAttributes(request, response);
         CustomContext customContext = new CustomContext();
-        customContext.setAuthToken(request.getHeader("Authorization"));
 
-        // Possibly a call to a service say tenancy-config, to get tenant properties before this.
+        customContext.setAuthToken(request.getHeader("Authorization"));
         customContext.setTenantProps("props");
 
-        customContextHolder.setContext(customContext);
-
+        attributes.setAttribute("context", customContext, RequestAttributes.SCOPE_REQUEST);
         try {
+            RequestContextHolder.setRequestAttributes(attributes);
             filterChain.doFilter(request, response);
         } finally {
-            customContextHolder.removeContext();
+            RequestContextHolder.resetRequestAttributes();
         }
     }
 }

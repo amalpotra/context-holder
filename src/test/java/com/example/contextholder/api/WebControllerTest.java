@@ -3,6 +3,7 @@ package com.example.contextholder.api;
 import com.example.contextholder.context.CustomContextHolder;
 import com.example.contextholder.context.CustomContextHolderImpl;
 import com.example.contextholder.filter.ContextFilter;
+import com.example.contextholder.filter.CustomContextFilter;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,16 +24,25 @@ class WebControllerTest {
     WebController webController;
     MockMvc mockMvc;
 
-    @BeforeEach
-    void beforeEach() {
+    @Test
+    void test() throws Exception {
         mockMvc = MockMvcBuilders.standaloneSetup(webController)
-                .addFilters(new ContextFilter(customContextHolder))
+                .addFilters(new CustomContextFilter(customContextHolder))
                 .build();
+
+        mockMvc.perform(get("/test").header("Authorization", "token"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(content().string("token|props"));
     }
 
     @Test
-    void test() throws Exception {
-        mockMvc.perform(get("/test").header("Authorization", "token"))
+    void test2() throws Exception {
+        mockMvc = MockMvcBuilders.standaloneSetup(webController)
+                .addFilters(new ContextFilter())
+                .build();
+
+        mockMvc.perform(get("/test2").header("Authorization", "token"))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(content().string("token|props"));
