@@ -15,6 +15,7 @@ This goes one step further than the previous approach.
 We can create our own `ContextHolder` that uses a `ThreadLocal` to store our custom data, in other words, our own implementation similar to what of `RequestContextHolder`.
 This way, we can store our custom data in the `ContextHolder` and access it from anywhere in the current thread.
 A custom implementation like this ease the access to the data, and also makes the code more readable and easier to test.
+
 ---
 
 #### Why ThreadLocal?
